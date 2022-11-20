@@ -8,14 +8,14 @@ import (
 type Emulator struct {
 	Memory     *Memory
 	Stack      *Stack
-	DelayTimer *DelayTimer
+	DelayTimer *Timer
 }
 
 func New(fontFile, programFile string) (*Emulator, error) {
 	e := &Emulator{
 		Memory:     NewMemory(MemorySize),
 		Stack:      NewStack(StackInitialSize),
-		DelayTimer: NewDelayTimer(),
+		DelayTimer: NewTimer(DelayTimerFrequency),
 	}
 
 	font, err := LoadFile(fontFile)

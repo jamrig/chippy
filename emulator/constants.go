@@ -6,8 +6,9 @@ const (
 	// MemoryProgramAddress is the address at which program data starts.
 	MemoryProgramAddress = 0x200
 	// MemoryFontAddress is the address at which the font data starts.
-	MemoryFontAddress = 0x50
-	StackInitialSize  = 32
-	DisplayWidth      = 64
-	DisplayHeight     = 32
+	MemoryFontAddress   = 0x50
+	StackInitialSize    = 32
+	DisplayWidth        = 64
+	DisplayHeight       = 32
+	DelayTimerFrequency = 60
 )
