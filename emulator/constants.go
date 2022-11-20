@@ -7,6 +7,9 @@ const (
 	MemoryProgramAddress = 0x200
 	// MemoryFontAddress is the address at which the font data starts.
 	MemoryFontAddress = 0x50
+	StackInitialSize  = 32
+	DisplayWidth      = 64
+	DisplayHeight     = 32
 )
 
 var FontData = []byte{

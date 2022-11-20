@@ -1,53 +1,38 @@
 package emulator
 
-import (
-	"fmt"
-	"strings"
-)
+// Memory represents the RAM.
+type Memory struct {
+	// Size is the size of the memory in bytes.
+	Size int
+	// Data is the raw byte data.
+	Data []byte
+}
 
-type Memory []byte
+// NewMemory returns a new Memory.
+func NewMemory(size int, fontAddr int, fontData []byte) *Memory {
+	m := &Memory{
+		Size: size,
+		Data: make([]byte, size),
+	}
 
-func NewMemory() Memory {
-	m := make(Memory, MemorySize)
-
-	m.Write(MemoryFontAddress, FontData)
+	m.Write(fontAddr, fontData)
 
 	return m
 }
 
-func (m Memory) String() string {
-	var b strings.Builder
-
-	col := 0
-
-	for i, v := range m {
-		if col == 0 {
-			fmt.Fprintf(&b, "\n|%08x|\t", i)
-		}
-		fmt.Fprintf(&b, "%02x ", v)
-
-		col += 1
-
-		if col == 16 {
-			col = 0
-		}
-	}
-
-	return b.String()
-}
-
-func (m Memory) Write(addr int, val []byte) {
-	if addr < 0 || addr >= MemorySize {
-		// TODO: error/logging
+// Write bytes starting at a specific address.
+func (m *Memory) Write(addr int, val []byte) {
+	if addr < 0 || addr >= m.Size {
+		// TODO: log
 		return
 	}
 
-	if (len(val) + addr) > MemorySize {
-		// TODO: error/logging
+	if (len(val) + addr) > m.Size {
+		// TODO: log
 		return
 	}
 
 	for i, v := range val {
-		m[addr+i] = v
+		m.Data[addr+i] = v
 	}
 }
