@@ -1,16 +1,21 @@
 package emulator
 
-import "os"
+import (
+	"os"
+	"time"
+)
 
 type Emulator struct {
-	Memory *Memory
-	Stack  *Stack
+	Memory     *Memory
+	Stack      *Stack
+	DelayTimer *DelayTimer
 }
 
 func New(fontFile, programFile string) (*Emulator, error) {
 	e := &Emulator{
-		Memory: NewMemory(MemorySize),
-		Stack:  NewStack(StackInitialSize),
+		Memory:     NewMemory(MemorySize),
+		Stack:      NewStack(StackInitialSize),
+		DelayTimer: NewDelayTimer(),
 	}
 
 	font, err := LoadFile(fontFile)
@@ -27,6 +32,20 @@ func New(fontFile, programFile string) (*Emulator, error) {
 	e.Memory.Write(MemoryProgramAddress, program)
 
 	return e, nil
+}
+
+func (e *Emulator) Start() {
+	now := time.Now().UnixNano()
+	delta := int64(0)
+
+	for {
+		delta = time.Now().UnixNano() - now
+
+		e.DelayTimer.Tick(delta)
+
+		now = time.Now().UnixNano()
+		time.Sleep(1 * time.Microsecond)
+	}
 }
 
 func LoadFile(file string) ([]byte, error) {
