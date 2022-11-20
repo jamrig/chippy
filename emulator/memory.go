@@ -9,13 +9,11 @@ type Memory struct {
 }
 
 // NewMemory returns a new Memory.
-func NewMemory(size int, fontAddr int, fontData []byte) *Memory {
+func NewMemory(size int) *Memory {
 	m := &Memory{
 		Size: size,
 		Data: make([]byte, size),
 	}
-
-	m.Write(fontAddr, fontData)
 
 	return m
 }
