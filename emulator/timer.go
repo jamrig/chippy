@@ -6,7 +6,7 @@ import "time"
 type Timer struct {
 	// Value is the value of the timer.
 	// This starts with being equal to the frequency and decrements.
-	Value uint8
+	Value int
 	// Delta is time in nanoseconds since the last update.
 	Delta int64
 	// UpdateDelta is the delta at which an update should happen.
@@ -33,10 +33,20 @@ func (t *Timer) Tick(delta int64) {
 		t.Delta = 0
 
 		if t.Value == 0 {
-			t.Value = 60
+			t.Value = t.Frequency
 			return
 		}
 
 		t.Value--
 	}
+}
+
+// GetValue gets the Value.
+func (t *Timer) GetValue() int {
+	return t.Value
+}
+
+// SetValue sets the Value.
+func (t *Timer) SetValue(val int) {
+	t.Value = val
 }
