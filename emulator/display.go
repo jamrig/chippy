@@ -37,6 +37,14 @@ func NewDisplay(width int, height int) *Display {
 	}
 }
 
+// Clear the back buffer.
+func (d *Display) Clear() {
+	d.Mutex.Lock()
+	defer d.Mutex.Unlock()
+
+	d.BackBuffer = image.NewRGBA(image.Rect(0, 0, d.Width, d.Height))
+}
+
 // DrawToBuffer draws the bytes to a location in the back buffer.
 func (d *Display) DrawToBuffer(x int, y int, data []byte) bool {
 	mx := x % d.Width
@@ -48,12 +56,12 @@ func (d *Display) DrawToBuffer(x int, y int, data []byte) bool {
 	unset := false
 
 	for i := 0; i < len(data); i++ {
-		if (y + i) >= d.Height-1 {
+		if (my + i) >= d.Height {
 			break
 		}
 
 		for j := 0; j < 8; j++ {
-			if (x + j) >= d.Width-1 {
+			if (mx + j) >= d.Width {
 				break
 			}
 
