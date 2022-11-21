@@ -11,4 +11,5 @@ const (
 	DisplayWidth        = 64
 	DisplayHeight       = 32
 	DelayTimerFrequency = 60
+	CPUFrequency        = 700
 )
