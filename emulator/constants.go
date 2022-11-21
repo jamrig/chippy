@@ -6,10 +6,17 @@ const (
 	// MemoryProgramAddress is the address at which program data starts.
 	MemoryProgramAddress = 0x200
 	// MemoryFontAddress is the address at which the font data starts.
-	MemoryFontAddress   = 0x50
-	StackInitialSize    = 32
-	DisplayWidth        = 64
-	DisplayHeight       = 32
+	MemoryFontAddress = 0x50
+	// StackInitialSize is the initial size of the stack.
+	StackInitialSize = 32
+	// CPUFrequency is the frequency of the CPU timer.
+	CPUFrequency = 700
+	// DisplayWidth is the width of the display.
+	DisplayWidth = 64
+	// DisplayHeight is the height of the display.
+	DisplayHeight = 32
+	// DisplayFrequency is the frequency of the display timer.
+	DisplayFrequency = 60
+	// DelayTimerFrequency is the frequency of the delay timer.
 	DelayTimerFrequency = 60
-	CPUFrequency        = 700
 )
