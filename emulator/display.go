@@ -48,7 +48,15 @@ func (d *Display) DrawToBuffer(x int, y int, data []byte) bool {
 	unset := false
 
 	for i := 0; i < len(data); i++ {
+		if (y + i) >= d.Height-1 {
+			break
+		}
+
 		for j := 0; j < 8; j++ {
+			if (x + j) >= d.Width-1 {
+				break
+			}
+
 			bit := GetBitAtPosition(data[i], 7-j)
 			if bit > 0 {
 				curr := d.BackBuffer.RGBAAt(mx+j, my+i)
