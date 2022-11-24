@@ -1,57 +1,45 @@
 package emulator
 
-import (
-	"image"
-	"image/color"
-	"log"
-	"sync"
-
-	"github.com/hajimehoshi/ebiten/v2"
-)
-
-// White is an RGBA white.
-var White = color.RGBA{R: 255, G: 255, B: 255, A: 255}
-
-// White is an RGBA black.
-var Black = color.RGBA{R: 0, G: 0, B: 0, A: 0}
-
 // Display represents the emulator display.
 type Display struct {
-	Width      int
-	Height     int
-	Buffer     *image.RGBA
-	BackBuffer *image.RGBA
-	Running    bool
-	Mutex      sync.Mutex
+	Width          int
+	Height         int
+	Buffer         []byte
+	LastTimerValue int
+	Timer          *Timer
 }
 
 // NewDisplay returns a new Display.
-func NewDisplay(width int, height int) *Display {
+func NewDisplay(width int, height int, freq int) *Display {
 	return &Display{
-		Width:      width,
-		Height:     height,
-		Buffer:     image.NewRGBA(image.Rect(0, 0, width, height)),
-		BackBuffer: image.NewRGBA(image.Rect(0, 0, width, height)),
-		Running:    false,
-		Mutex:      sync.Mutex{},
+		Width:          width,
+		Height:         height,
+		Buffer:         make([]byte, width*height),
+		LastTimerValue: 0,
+		Timer:          NewTimer(freq),
 	}
 }
 
-// Clear the back buffer.
-func (d *Display) Clear() {
-	d.Mutex.Lock()
-	defer d.Mutex.Unlock()
+// Tick calls the timer tick and if it has changed performs a display render.
+func (d *Display) Tick(delta int64) {
+	d.Timer.Tick(delta)
 
-	d.BackBuffer = image.NewRGBA(image.Rect(0, 0, d.Width, d.Height))
+	if d.LastTimerValue != d.Timer.GetValue() {
+		d.LastTimerValue = d.Timer.GetValue()
+
+		// TODO: trigger render
+	}
 }
 
-// DrawToBuffer draws the bytes to a location in the back buffer.
-func (d *Display) DrawToBuffer(x int, y int, data []byte) bool {
+// Clear the buffer.
+func (d *Display) Clear() {
+	d.Buffer = make([]byte, 0)
+}
+
+// Write the bytes to a location in the buffer.
+func (d *Display) Write(x int, y int, data []byte) bool {
 	mx := x % d.Width
 	my := y % d.Height
-
-	d.Mutex.Lock()
-	defer d.Mutex.Unlock()
 
 	unset := false
 
@@ -67,52 +55,19 @@ func (d *Display) DrawToBuffer(x int, y int, data []byte) bool {
 
 			bit := GetBitAtPosition(data[i], 7-j)
 			if bit > 0 {
-				curr := d.BackBuffer.RGBAAt(mx+j, my+i)
+				idx := (my+i)*d.Width + mx + j
 
-				if curr == Black {
-					d.BackBuffer.SetRGBA(mx+j, my+i, White)
+				curr := d.Buffer[idx]
+
+				if curr == 0 {
+					d.Buffer[idx] = 0xFF
 				} else {
 					unset = true
-					d.BackBuffer.SetRGBA(mx+j, my+i, Black)
+					d.Buffer[idx] = 0x00
 				}
 			}
 		}
 	}
 
 	return unset
-}
-
-// Update internal ebiten call.
-func (d *Display) Update() error {
-	return nil
-}
-
-// Draw internal ebiten call.
-func (d *Display) Draw(screen *ebiten.Image) {
-	d.Mutex.Lock()
-	d.Buffer.Pix = d.BackBuffer.Pix[:]
-	d.Mutex.Unlock()
-
-	screen.WritePixels(d.BackBuffer.Pix)
-}
-
-// Layout internal ebiten call.
-func (d *Display) Layout(outsideWidth, outsideHeight int) (int, int) {
-	return d.Width, d.Height
-}
-
-// Start the display's main loop.
-func (d *Display) Start() {
-	if d.Running {
-		return
-	}
-
-	d.Running = true
-
-	ebiten.SetWindowTitle("Chippy")
-	ebiten.MaximizeWindow()
-
-	if err := ebiten.RunGame(d); err != nil {
-		log.Fatal(err)
-	}
 }

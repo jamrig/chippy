@@ -9,14 +9,24 @@ type Emulator struct {
 	Memory     *Memory
 	Stack      *Stack
 	DelayTimer *Timer
+	CPU        *CPU
+	Display    *Display
 }
 
 func New(fontFile, programFile string) (*Emulator, error) {
+	m := NewMemory(MemorySize)
+	d := NewDisplay(DisplayWidth, DisplayHeight, DisplayFrequency)
 	e := &Emulator{
-		Memory:     NewMemory(MemorySize),
+		Memory:     m,
 		Stack:      NewStack(StackInitialSize),
 		DelayTimer: NewTimer(DelayTimerFrequency),
+		CPU:        NewCPU(m, d, CPUFrequency, MemoryProgramAddress),
+		Display:    d,
 	}
+
+	// TODO: create OpenGL
+	// TODO: create input manager (using OpenGL file)
+	// TODO: pass OpenGL to Display
 
 	font, err := LoadFile(fontFile)
 	if err != nil {
@@ -42,10 +52,14 @@ func (e *Emulator) Start() {
 		delta = time.Now().UnixNano() - now
 
 		e.DelayTimer.Tick(delta)
+		e.CPU.Tick(delta)
+		e.Display.Tick(delta)
 
 		now = time.Now().UnixNano()
+		// TODO: use the delta to reduce the sleep
 		time.Sleep(1 * time.Microsecond)
 	}
+
 }
 
 func LoadFile(file string) ([]byte, error) {

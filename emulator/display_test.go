@@ -8,81 +8,73 @@ import (
 )
 
 func TestEmulator_Display_noop(t *testing.T) {
-	d := emulator.NewDisplay(10, 10)
+	d := emulator.NewDisplay(10, 10, 0)
 
 	assert.Equal(t, 10, d.Width)
 	assert.Equal(t, 10, d.Height)
-	assert.Equal(t, make([]byte, 400), d.BackBuffer.Pix)
-	assert.Equal(t, make([]byte, 400), d.Buffer.Pix)
+	assert.Equal(t, make([]byte, 100), d.Buffer)
 }
 
 func TestEmulator_Display_Clear(t *testing.T) {
-	d := emulator.NewDisplay(10, 10)
+	d := emulator.NewDisplay(10, 10, 0)
 
-	assert.Equal(t, make([]byte, 400), d.BackBuffer.Pix)
-	assert.Equal(t, make([]byte, 400), d.Buffer.Pix)
+	assert.Equal(t, make([]byte, 100), d.Buffer)
 
-	d.DrawToBuffer(1, 5, []byte{0b11001100, 0b00110011})
+	d.Write(1, 5, []byte{0b11001100, 0b00110011})
 
-	assert.NotEqual(t, make([]byte, 400), d.BackBuffer.Pix)
-	assert.Equal(t, make([]byte, 400), d.Buffer.Pix)
+	assert.NotEqual(t, make([]byte, 100), d.Buffer)
 
 	d.Clear()
 
-	assert.Equal(t, make([]byte, 400), d.BackBuffer.Pix)
-	assert.Equal(t, make([]byte, 400), d.Buffer.Pix)
+	assert.Equal(t, make([]byte, 100), d.Buffer)
 }
 
-func TestEmulator_Display_DrawToBuffer_in_bounds(t *testing.T) {
-	d := emulator.NewDisplay(10, 10)
+func TestEmulator_Display_Write_in_bounds(t *testing.T) {
+	d := emulator.NewDisplay(10, 10, 0)
 
-	assert.Equal(t, make([]byte, 400), d.BackBuffer.Pix)
-	assert.Equal(t, make([]byte, 400), d.Buffer.Pix)
+	assert.Equal(t, make([]byte, 100), d.Buffer)
 
-	d.DrawToBuffer(1, 5, []byte{0b11001100, 0b00110011})
+	d.Write(1, 5, []byte{0b11001100, 0b00110011})
 
-	assert.Equal(t, make([]byte, 400), d.Buffer.Pix)
-	assert.Equal(t, emulator.White, d.BackBuffer.RGBAAt(1, 5))
-	assert.Equal(t, emulator.White, d.BackBuffer.RGBAAt(2, 5))
-	assert.Equal(t, emulator.Black, d.BackBuffer.RGBAAt(3, 5))
-	assert.Equal(t, emulator.Black, d.BackBuffer.RGBAAt(4, 5))
-	assert.Equal(t, emulator.White, d.BackBuffer.RGBAAt(5, 5))
-	assert.Equal(t, emulator.White, d.BackBuffer.RGBAAt(6, 5))
-	assert.Equal(t, emulator.Black, d.BackBuffer.RGBAAt(7, 5))
-	assert.Equal(t, emulator.Black, d.BackBuffer.RGBAAt(8, 5))
-	assert.Equal(t, emulator.Black, d.BackBuffer.RGBAAt(1, 6))
-	assert.Equal(t, emulator.Black, d.BackBuffer.RGBAAt(2, 6))
-	assert.Equal(t, emulator.White, d.BackBuffer.RGBAAt(3, 6))
-	assert.Equal(t, emulator.White, d.BackBuffer.RGBAAt(4, 6))
-	assert.Equal(t, emulator.Black, d.BackBuffer.RGBAAt(5, 6))
-	assert.Equal(t, emulator.Black, d.BackBuffer.RGBAAt(6, 6))
-	assert.Equal(t, emulator.White, d.BackBuffer.RGBAAt(7, 6))
-	assert.Equal(t, emulator.White, d.BackBuffer.RGBAAt(8, 6))
+	assert.Equal(t, 0xFF, d.Buffer[40])
+	assert.Equal(t, 0xFF, d.Buffer[41])
+	assert.Equal(t, 0x00, d.Buffer[42])
+	assert.Equal(t, 0x00, d.Buffer[43])
+	assert.Equal(t, 0xFF, d.Buffer[44])
+	assert.Equal(t, 0xFF, d.Buffer[45])
+	assert.Equal(t, 0x00, d.Buffer[46])
+	assert.Equal(t, 0x00, d.Buffer[47])
+	assert.Equal(t, 0x00, d.Buffer[50])
+	assert.Equal(t, 0x00, d.Buffer[51])
+	assert.Equal(t, 0xFF, d.Buffer[52])
+	assert.Equal(t, 0xFF, d.Buffer[53])
+	assert.Equal(t, 0x00, d.Buffer[54])
+	assert.Equal(t, 0x00, d.Buffer[55])
+	assert.Equal(t, 0xFF, d.Buffer[56])
+	assert.Equal(t, 0xFF, d.Buffer[57])
 }
 
-func TestEmulator_Display_DrawToBuffer_out_of_bounds(t *testing.T) {
-	d := emulator.NewDisplay(10, 10)
+func TestEmulator_Display_Write_out_of_bounds(t *testing.T) {
+	d := emulator.NewDisplay(10, 10, 0)
 
-	assert.Equal(t, make([]byte, 400), d.BackBuffer.Pix)
-	assert.Equal(t, make([]byte, 400), d.Buffer.Pix)
+	assert.Equal(t, make([]byte, 100), d.Buffer)
 
-	d.DrawToBuffer(15, 19, []byte{0b11001100, 0b00110011})
+	d.Write(15, 19, []byte{0b11001100, 0b00110011})
 
-	assert.Equal(t, make([]byte, 400), d.Buffer.Pix)
-	assert.Equal(t, emulator.White, d.BackBuffer.RGBAAt(5, 9))
-	assert.Equal(t, emulator.White, d.BackBuffer.RGBAAt(6, 9))
-	assert.Equal(t, emulator.Black, d.BackBuffer.RGBAAt(7, 9))
-	assert.Equal(t, emulator.Black, d.BackBuffer.RGBAAt(8, 9))
-	assert.Equal(t, emulator.White, d.BackBuffer.RGBAAt(9, 9))
-	assert.Equal(t, emulator.Black, d.BackBuffer.RGBAAt(0, 9))
-	assert.Equal(t, emulator.Black, d.BackBuffer.RGBAAt(1, 9))
-	assert.Equal(t, emulator.Black, d.BackBuffer.RGBAAt(2, 9))
-	assert.Equal(t, emulator.Black, d.BackBuffer.RGBAAt(5, 0))
-	assert.Equal(t, emulator.Black, d.BackBuffer.RGBAAt(6, 0))
-	assert.Equal(t, emulator.Black, d.BackBuffer.RGBAAt(7, 0))
-	assert.Equal(t, emulator.Black, d.BackBuffer.RGBAAt(8, 0))
-	assert.Equal(t, emulator.Black, d.BackBuffer.RGBAAt(9, 0))
-	assert.Equal(t, emulator.Black, d.BackBuffer.RGBAAt(0, 0))
-	assert.Equal(t, emulator.Black, d.BackBuffer.RGBAAt(1, 0))
-	assert.Equal(t, emulator.Black, d.BackBuffer.RGBAAt(2, 0))
+	assert.Equal(t, 0xFF, d.Buffer[40])
+	assert.Equal(t, 0xFF, d.Buffer[41])
+	assert.Equal(t, 0x00, d.Buffer[42])
+	assert.Equal(t, 0x00, d.Buffer[43])
+	assert.Equal(t, 0xFF, d.Buffer[44])
+	assert.Equal(t, 0x00, d.Buffer[45])
+	assert.Equal(t, 0x00, d.Buffer[46])
+	assert.Equal(t, 0x00, d.Buffer[47])
+	assert.Equal(t, 0x00, d.Buffer[50])
+	assert.Equal(t, 0x00, d.Buffer[51])
+	assert.Equal(t, 0x00, d.Buffer[52])
+	assert.Equal(t, 0x00, d.Buffer[53])
+	assert.Equal(t, 0x00, d.Buffer[54])
+	assert.Equal(t, 0x00, d.Buffer[55])
+	assert.Equal(t, 0x00, d.Buffer[56])
+	assert.Equal(t, 0x00, d.Buffer[57])
 }
