@@ -28,11 +28,13 @@ func New(fontFile, programFile string) (*Emulator, error) {
 	w := NewWindow()
 	m := NewMemory(MemorySize)
 	d := NewDisplay(DisplayWidth, DisplayHeight, DisplayFrequency, w)
+	s := NewStack(StackInitialSize)
+	dt := NewTimer(DelayTimerFrequency)
 	e := &Emulator{
 		Memory:     m,
-		Stack:      NewStack(StackInitialSize),
-		DelayTimer: NewTimer(DelayTimerFrequency),
-		CPU:        NewCPU(m, d, CPUFrequency, MemoryProgramAddress),
+		Stack:      s,
+		DelayTimer: dt,
+		CPU:        NewCPU(m, s, d, dt, CPUFrequency, MemoryProgramAddress, CPUUseLegacyOperations),
 		Display:    d,
 		Window:     w,
 	}

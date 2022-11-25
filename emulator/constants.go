@@ -11,6 +11,8 @@ const (
 	StackInitialSize = 32
 	// CPUFrequency is the frequency of the CPU timer.
 	CPUFrequency = 700
+	// CPUUseLegacyOperations if true use the original behaviour for the CPU operations.
+	CPUUseLegacyOperations = false
 	// DisplayWidth is the width of the display.
 	DisplayWidth = 64
 	// DisplayHeight is the height of the display.

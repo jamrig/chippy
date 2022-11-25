@@ -26,7 +26,7 @@ func (m *Memory) Write(addr uint16, val []byte) {
 			return
 		}
 
-		m.Data[addr+uint16(i)] = v
+		m.Data[loc] = v
 	}
 }
 
