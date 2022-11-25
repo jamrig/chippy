@@ -8,7 +8,7 @@ import (
 )
 
 func TestEmulator_Display_noop(t *testing.T) {
-	d := emulator.NewDisplay(10, 10, 0)
+	d := emulator.NewDisplay(10, 10, 1, nil)
 
 	assert.Equal(t, 10, d.Width)
 	assert.Equal(t, 10, d.Height)
@@ -16,7 +16,7 @@ func TestEmulator_Display_noop(t *testing.T) {
 }
 
 func TestEmulator_Display_Clear(t *testing.T) {
-	d := emulator.NewDisplay(10, 10, 0)
+	d := emulator.NewDisplay(10, 10, 1, nil)
 
 	assert.Equal(t, make([]byte, 100), d.Buffer)
 
@@ -30,51 +30,53 @@ func TestEmulator_Display_Clear(t *testing.T) {
 }
 
 func TestEmulator_Display_Write_in_bounds(t *testing.T) {
-	d := emulator.NewDisplay(10, 10, 0)
+	d := emulator.NewDisplay(10, 10, 1, nil)
 
 	assert.Equal(t, make([]byte, 100), d.Buffer)
 
-	d.Write(1, 5, []byte{0b11001100, 0b00110011})
+	d.Write(0, 1, []byte{0b11001100, 0b00110011})
 
-	assert.Equal(t, 0xFF, d.Buffer[40])
-	assert.Equal(t, 0xFF, d.Buffer[41])
-	assert.Equal(t, 0x00, d.Buffer[42])
-	assert.Equal(t, 0x00, d.Buffer[43])
-	assert.Equal(t, 0xFF, d.Buffer[44])
-	assert.Equal(t, 0xFF, d.Buffer[45])
-	assert.Equal(t, 0x00, d.Buffer[46])
-	assert.Equal(t, 0x00, d.Buffer[47])
-	assert.Equal(t, 0x00, d.Buffer[50])
-	assert.Equal(t, 0x00, d.Buffer[51])
-	assert.Equal(t, 0xFF, d.Buffer[52])
-	assert.Equal(t, 0xFF, d.Buffer[53])
-	assert.Equal(t, 0x00, d.Buffer[54])
-	assert.Equal(t, 0x00, d.Buffer[55])
-	assert.Equal(t, 0xFF, d.Buffer[56])
-	assert.Equal(t, 0xFF, d.Buffer[57])
+	t.Log(d.Buffer)
+
+	assert.Equal(t, byte(0xFF), d.Buffer[10])
+	assert.Equal(t, byte(0xFF), d.Buffer[11])
+	assert.Equal(t, byte(0x00), d.Buffer[12])
+	assert.Equal(t, byte(0x00), d.Buffer[13])
+	assert.Equal(t, byte(0xFF), d.Buffer[14])
+	assert.Equal(t, byte(0xFF), d.Buffer[15])
+	assert.Equal(t, byte(0x00), d.Buffer[16])
+	assert.Equal(t, byte(0x00), d.Buffer[17])
+	assert.Equal(t, byte(0x00), d.Buffer[20])
+	assert.Equal(t, byte(0x00), d.Buffer[21])
+	assert.Equal(t, byte(0xFF), d.Buffer[22])
+	assert.Equal(t, byte(0xFF), d.Buffer[23])
+	assert.Equal(t, byte(0x00), d.Buffer[24])
+	assert.Equal(t, byte(0x00), d.Buffer[25])
+	assert.Equal(t, byte(0xFF), d.Buffer[26])
+	assert.Equal(t, byte(0xFF), d.Buffer[27])
 }
 
 func TestEmulator_Display_Write_out_of_bounds(t *testing.T) {
-	d := emulator.NewDisplay(10, 10, 0)
+	d := emulator.NewDisplay(10, 10, 1, nil)
 
 	assert.Equal(t, make([]byte, 100), d.Buffer)
 
-	d.Write(15, 19, []byte{0b11001100, 0b00110011})
+	d.Write(10, 11, []byte{0b11001100, 0b00110011})
 
-	assert.Equal(t, 0xFF, d.Buffer[40])
-	assert.Equal(t, 0xFF, d.Buffer[41])
-	assert.Equal(t, 0x00, d.Buffer[42])
-	assert.Equal(t, 0x00, d.Buffer[43])
-	assert.Equal(t, 0xFF, d.Buffer[44])
-	assert.Equal(t, 0x00, d.Buffer[45])
-	assert.Equal(t, 0x00, d.Buffer[46])
-	assert.Equal(t, 0x00, d.Buffer[47])
-	assert.Equal(t, 0x00, d.Buffer[50])
-	assert.Equal(t, 0x00, d.Buffer[51])
-	assert.Equal(t, 0x00, d.Buffer[52])
-	assert.Equal(t, 0x00, d.Buffer[53])
-	assert.Equal(t, 0x00, d.Buffer[54])
-	assert.Equal(t, 0x00, d.Buffer[55])
-	assert.Equal(t, 0x00, d.Buffer[56])
-	assert.Equal(t, 0x00, d.Buffer[57])
+	assert.Equal(t, byte(0xFF), d.Buffer[10])
+	assert.Equal(t, byte(0xFF), d.Buffer[11])
+	assert.Equal(t, byte(0x00), d.Buffer[12])
+	assert.Equal(t, byte(0x00), d.Buffer[13])
+	assert.Equal(t, byte(0xFF), d.Buffer[14])
+	assert.Equal(t, byte(0xFF), d.Buffer[15])
+	assert.Equal(t, byte(0x00), d.Buffer[16])
+	assert.Equal(t, byte(0x00), d.Buffer[17])
+	assert.Equal(t, byte(0x00), d.Buffer[20])
+	assert.Equal(t, byte(0x00), d.Buffer[21])
+	assert.Equal(t, byte(0xFF), d.Buffer[22])
+	assert.Equal(t, byte(0xFF), d.Buffer[23])
+	assert.Equal(t, byte(0x00), d.Buffer[24])
+	assert.Equal(t, byte(0x00), d.Buffer[25])
+	assert.Equal(t, byte(0xFF), d.Buffer[26])
+	assert.Equal(t, byte(0xFF), d.Buffer[27])
 }

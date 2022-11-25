@@ -7,16 +7,20 @@ type Display struct {
 	Buffer         []byte
 	LastTimerValue int
 	Timer          *Timer
+	Window         *Window
+	Changed        bool
 }
 
 // NewDisplay returns a new Display.
-func NewDisplay(width int, height int, freq int) *Display {
+func NewDisplay(width int, height int, freq int, win *Window) *Display {
 	return &Display{
 		Width:          width,
 		Height:         height,
 		Buffer:         make([]byte, width*height),
 		LastTimerValue: 0,
 		Timer:          NewTimer(freq),
+		Window:         win,
+		Changed:        false,
 	}
 }
 
@@ -26,14 +30,17 @@ func (d *Display) Tick(delta int64) {
 
 	if d.LastTimerValue != d.Timer.GetValue() {
 		d.LastTimerValue = d.Timer.GetValue()
-
-		// TODO: trigger render
+		if d.Changed {
+			d.Changed = false
+			d.Window.Render(d.Buffer)
+		}
 	}
 }
 
 // Clear the buffer.
 func (d *Display) Clear() {
-	d.Buffer = make([]byte, 0)
+	d.Buffer = make([]byte, d.Width*d.Height)
+	d.Changed = true
 }
 
 // Write the bytes to a location in the buffer.
@@ -68,6 +75,8 @@ func (d *Display) Write(x int, y int, data []byte) bool {
 			}
 		}
 	}
+
+	d.Changed = true
 
 	return unset
 }
