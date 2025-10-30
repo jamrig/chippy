@@ -1,7 +1,6 @@
 package emulator
 
 // Stack represents FILO stack.
-// The stack purposely doesn't clear old data, it instead just moves the pointer.
 type Stack struct {
 	// Count is the number of items on the stack.
 	Count int
@@ -10,17 +9,16 @@ type Stack struct {
 }
 
 // NewStack creates a new Stack.
-func NewStack(size int) *Stack {
+func NewStack(initialSize int) *Stack {
 	return &Stack{
 		Count: 0,
-		Data:  make([]uint16, size),
+		Data:  make([]uint16, initialSize),
 	}
 }
 
 // Pop the top item off the stack.
 func (s *Stack) Pop() uint16 {
 	if s.Count == 0 {
-		// TODO: log
 		return 0
 	}
 

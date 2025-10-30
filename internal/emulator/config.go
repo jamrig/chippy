@@ -7,8 +7,8 @@ const (
 	MemoryProgramAddress = 0x200
 	// // MemoryFontAddress is the address at which the font data starts.
 	MemoryFontAddress = 0x50
-	// // StackInitialSize is the initial size of the stack.
-	// StackInitialSize = 32
+	// StackInitialSize is the initial size of the stack.
+	StackInitialSize = 32
 	// // CPUFrequency is the frequency of the CPU timer.
 	// CPUFrequency = 700
 	// // CPUUseLegacyOperations if true use the original behaviour for the CPU operations.
