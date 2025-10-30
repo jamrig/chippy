@@ -4,7 +4,7 @@ import (
 	"log"
 	"os"
 
-	"github.com/jamrig/chippy/emulator"
+	"github.com/jamrig/chippy/internal/emulator"
 )
 
 func main() {
