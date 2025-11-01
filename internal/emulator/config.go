@@ -13,8 +13,14 @@ type Config struct {
 	InstructionTimerFrequency int
 	// DelayTimerFrequency is the frequency of the delay timer.
 	DelayTimerFrequency int
-	// CPUUseLegacyOperations if true use the original behaviour for the CPU operations.
-	CPUUseLegacyOperations bool
+	// InstructionAssignBeforeShift if true then assign Vy to Vx before shifting.
+	InstructionAssignBeforeShift bool
+	// InstructionUseVxForOffset if true then use Vx for offset rather than V0.
+	InstructionUseVxForOffset bool
+	// InstructionOverflowAddIndex if true then will set overflow flag for index addition.
+	InstructionOverflowAddIndex bool
+	// InstructionModifyIndexOnStoreAndLoad if true then I will be modified with Store and Load.
+	InstructionModifyIndexOnStoreAndLoad bool
 	// // DisplayWidth is the width of the display.
 	// DisplayWidth = 64
 	// // DisplayHeight is the height of the display.
@@ -24,11 +30,14 @@ type Config struct {
 }
 
 var CHIP8Config = &Config{
-	MemorySize:                4096,
-	MemoryProgramAddress:      0x200,
-	MemoryFontAddress:         0x50,
-	StackInitialSize:          32,
-	InstructionTimerFrequency: 700,
-	CPUUseLegacyOperations:    false,
-	DelayTimerFrequency:       60,
+	MemorySize:                           4096,
+	MemoryProgramAddress:                 0x200,
+	MemoryFontAddress:                    0x50,
+	StackInitialSize:                     32,
+	InstructionTimerFrequency:            700,
+	InstructionAssignBeforeShift:         false,
+	InstructionUseVxForOffset:            false,
+	InstructionOverflowAddIndex:          false,
+	InstructionModifyIndexOnStoreAndLoad: true,
+	DelayTimerFrequency:                  60,
 }

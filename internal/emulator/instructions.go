@@ -2,230 +2,351 @@ package emulator
 
 import "math/rand"
 
-func (e *Emulator) Op00E0() {
-	e.Display.Clear()
+type Instruction struct {
+	Name    string
+	Is      func(o *Opcode) bool
+	Execute func(e *Emulator, o *Opcode)
 }
 
-func (e *Emulator) Op00EE() {
-	e.PC = e.Stack.Pop()
-}
+var Instructions = []Instruction{
+	{
+		Name: "[00E0] Clear Screen",
+		Is:   func(o *Opcode) bool { return o.Raw == 0x00E0 },
+		Execute: func(e *Emulator, o *Opcode) {
+			// e.Display.Clear()
+		},
+	},
+	{
+		Name: "[00EE] Return Subroutine",
+		Is:   func(o *Opcode) bool { return o.Raw == 0x00EE },
+		Execute: func(e *Emulator, o *Opcode) {
+			e.PC = e.Stack.Pop()
+		},
+	},
+	{
+		Name: "[1NNN] Jump",
+		Is:   func(o *Opcode) bool { return o.F == 1 },
+		Execute: func(e *Emulator, o *Opcode) {
+			e.PC = o.NNN
+		},
+	},
+	{
+		Name: "[2NNN] Call Subroutine",
+		Is:   func(o *Opcode) bool { return o.F == 2 },
+		Execute: func(e *Emulator, o *Opcode) {
+			e.Stack.Push(e.PC)
+			e.PC = o.NNN
+		},
+	},
+	{
+		Name: "[3XNN] Skip If VX == NN",
+		Is:   func(o *Opcode) bool { return o.F == 3 },
+		Execute: func(e *Emulator, o *Opcode) {
+			if e.V[o.X] == o.NN {
+				e.PC += 2
+			}
+		},
+	},
+	{
+		Name: "[4XNN] Skip If VX != NN",
+		Is:   func(o *Opcode) bool { return o.F == 4 },
+		Execute: func(e *Emulator, o *Opcode) {
+			if e.V[o.X] != o.NN {
+				e.PC += 2
+			}
+		},
+	},
+	{
+		Name: "[5XY0] Skip If VX == VY",
+		Is:   func(o *Opcode) bool { return o.F == 5 },
+		Execute: func(e *Emulator, o *Opcode) {
+			if e.V[o.X] == e.V[o.Y] {
+				e.PC += 2
+			}
+		},
+	},
+	{
+		Name: "[6XNN] VX == NN",
+		Is:   func(o *Opcode) bool { return o.F == 6 },
+		Execute: func(e *Emulator, o *Opcode) {
+			e.V[o.X] = o.NN
+		},
+	},
+	{
+		Name: "[7XNN] Vx += NN (no carry)",
+		Is:   func(o *Opcode) bool { return o.F == 7 },
+		Execute: func(e *Emulator, o *Opcode) {
+			e.V[o.X] = e.V[o.X] + o.NN
+		},
+	},
+	{
+		Name: "[8XY0] Vx = Vy",
+		Is:   func(o *Opcode) bool { return o.F == 8 && o.N == 0 },
+		Execute: func(e *Emulator, o *Opcode) {
+			e.V[o.X] = e.V[o.Y]
+		},
+	},
+	{
+		Name: "[8XY1] Vx |= Vy",
+		Is:   func(o *Opcode) bool { return o.F == 8 && o.N == 1 },
+		Execute: func(e *Emulator, o *Opcode) {
+			e.V[o.X] |= e.V[o.Y]
+		},
+	},
+	{
+		Name: "[8XY2] Vx &= Vy",
+		Is:   func(o *Opcode) bool { return o.F == 8 && o.N == 2 },
+		Execute: func(e *Emulator, o *Opcode) {
+			e.V[o.X] &= e.V[o.Y]
+		},
+	},
+	{
+		Name: "[8XY3] Vx ^= Vy",
+		Is:   func(o *Opcode) bool { return o.F == 8 && o.N == 3 },
+		Execute: func(e *Emulator, o *Opcode) {
+			e.V[o.X] ^= e.V[o.Y]
+		},
+	},
+	{
+		Name: "[8XY4] Vx += Vy",
+		Is:   func(o *Opcode) bool { return o.F == 8 && o.N == 4 },
+		Execute: func(e *Emulator, o *Opcode) {
+			if int(e.V[o.X])+int(e.V[o.Y]) > 0xFFFF {
+				e.V[15] = 1
+			} else {
+				e.V[15] = 0
+			}
 
-func (e *Emulator) Op1NNN(NNN uint16) {
-	e.PC = NNN
-}
+			e.V[o.X] += e.V[o.Y]
+		},
+	},
+	{
+		Name: "[8XY5] Vx -= Vy",
+		Is:   func(o *Opcode) bool { return o.F == 8 && o.N == 5 },
+		Execute: func(e *Emulator, o *Opcode) {
+			if int(e.V[o.X])-int(e.V[o.Y]) > 0x0 {
+				e.V[15] = 1
+			} else {
+				e.V[15] = 0
+			}
 
-func (e *Emulator) Op2NNN(NNN uint16) {
-	e.Stack.Push(e.PC)
-	e.PC = NNN
-}
+			e.V[o.X] -= e.V[o.Y]
+		},
+	},
+	{
+		Name: "[8XY6] Vx >>= 1",
+		Is:   func(o *Opcode) bool { return o.F == 8 && o.N == 6 },
+		Execute: func(e *Emulator, o *Opcode) {
+			VX := e.V[o.X]
 
-func (e *Emulator) Op3XNN(X byte, NN byte) {
-	if e.V[X] == NN {
-		e.PC += 2
-	}
-}
+			if e.Config.InstructionAssignBeforeShift {
+				VX = e.V[o.Y]
+			}
 
-func (e *Emulator) Op4XNN(X byte, NN byte) {
-	if e.V[X] != NN {
-		e.PC += 2
-	}
-}
+			e.V[o.X] = VX >> 1
+			e.V[15] = GetBitAtPosition(VX, 0)
+		},
+	},
+	{
+		Name: "[8XY7] Vx = Vy - Vx",
+		Is:   func(o *Opcode) bool { return o.F == 8 && o.N == 7 },
+		Execute: func(e *Emulator, o *Opcode) {
+			if int(e.V[o.Y])-int(e.V[o.X]) > 0x0 {
+				e.V[15] = 1
+			} else {
+				e.V[15] = 0
+			}
 
-func (e *Emulator) Op5XY0(X byte, Y byte) {
-	if e.V[X] == e.V[Y] {
-		e.PC += 2
-	}
-}
+			e.V[o.X] = e.V[o.Y] - e.V[o.X]
+		},
+	},
+	{
+		Name: "[8XYE] Vx <<= 1",
+		Is:   func(o *Opcode) bool { return o.F == 8 && o.N == 0xE },
+		Execute: func(e *Emulator, o *Opcode) {
+			VX := e.V[o.X]
 
-func (e *Emulator) Op6XNN(X byte, NN byte) {
-	e.V[X] = NN
-}
+			if e.Config.InstructionAssignBeforeShift {
+				VX = e.V[o.Y]
+			}
 
-func (e *Emulator) Op7XNN(X byte, NN byte) {
-	e.V[X] = e.V[X] + NN
-}
+			e.V[o.X] = VX << 1
+			e.V[15] = GetBitAtPosition(VX, 7)
+		},
+	},
+	{
+		Name: "[9XY0] Skip If Vx != Vy",
+		Is:   func(o *Opcode) bool { return o.F == 9 },
+		Execute: func(e *Emulator, o *Opcode) {
+			if e.V[o.X] != e.V[o.Y] {
+				e.PC += 2
+			}
+		},
+	},
+	{
+		Name: "[ANNN] Set Index",
+		Is:   func(o *Opcode) bool { return o.F == 0xA },
+		Execute: func(e *Emulator, o *Opcode) {
+			e.I = o.NNN
+		},
+	},
+	{
+		Name: "[BNNN] Jump With Offset",
+		Is:   func(o *Opcode) bool { return o.F == 0xB },
+		Execute: func(e *Emulator, o *Opcode) {
+			if e.Config.InstructionUseVxForOffset {
+				e.PC = uint16(e.V[0]) + o.NNN
+			} else {
+				e.PC = uint16(e.V[o.X]) + o.NNN
+			}
+		},
+	},
+	{
+		Name: "[CNNN] Rand",
+		Is:   func(o *Opcode) bool { return o.F == 0xC },
+		Execute: func(e *Emulator, o *Opcode) {
+			e.V[o.X] = byte(rand.Intn(256)) & o.NN
+		},
+	},
+	{
+		Name: "[DNNN] Display",
+		Is:   func(o *Opcode) bool { return o.F == 0xC },
+		Execute: func(e *Emulator, o *Opcode) {
+			e.V[o.X] = byte(rand.Intn(256)) & o.NN
+		},
+	},
+	{
+		Name: "[DNNN] Display",
+		Is:   func(o *Opcode) bool { return o.F == 0xD },
+		Execute: func(e *Emulator, o *Opcode) {
+			// x := int(e.V[o.X])
+			// y := int(e.V[o.Y])
+			n := int(o.N)
+			data := make([]byte, 0, n)
 
-func (e *Emulator) Op8XY0(X byte, Y byte) {
-	e.V[X] = e.V[Y]
-}
+			for i := 0; i < n; i++ {
+				data = append(data, e.Memory.Read(e.I+uint16(i)))
+			}
 
-func (e *Emulator) Op8XY1(X byte, Y byte) {
-	e.V[X] = e.V[X] | e.V[Y]
-}
+			// unset := e.Display.Write(x, y, data)
 
-func (e *Emulator) Op8XY2(X byte, Y byte) {
-	e.V[X] = e.V[X] & e.V[Y]
-}
+			// if unset {
+			// 	e.V[15] = 1
+			// } else {
+			// 	e.V[15] = 0
+			// }
+		},
+	},
+	{
+		Name: "[EX9E] Display",
+		Is:   func(o *Opcode) bool { return o.F == 0xE && o.NN == 0x9E },
+		Execute: func(e *Emulator, o *Opcode) {
+			// TODO: key
+		},
+	},
+	{
+		Name: "[EX9E] Skip If Key Pressed",
+		Is:   func(o *Opcode) bool { return o.F == 0xE && o.NN == 0x9E },
+		Execute: func(e *Emulator, o *Opcode) {
+			// TODO: key
+		},
+	},
+	{
+		Name: "[EXA1] Skip If Key Not Pressed",
+		Is:   func(o *Opcode) bool { return o.F == 0xE && o.NN == 0xA1 },
+		Execute: func(e *Emulator, o *Opcode) {
+			// TODO: key
+		},
+	},
+	{
+		Name: "[FX07] Vx = DelayTimer",
+		Is:   func(o *Opcode) bool { return o.F == 0xF && o.NN == 0x07 },
+		Execute: func(e *Emulator, o *Opcode) {
+			e.V[o.X] = byte(e.DelayTimer.GetValue())
+		},
+	},
+	{
+		Name: "[FX0A] Get Key",
+		Is:   func(o *Opcode) bool { return o.F == 0xF && o.NN == 0x0A },
+		Execute: func(e *Emulator, o *Opcode) {
+			// TODO: key
+		},
+	},
+	{
+		Name: "[FX15] DelayTimer = Vx",
+		Is:   func(o *Opcode) bool { return o.F == 0xF && o.NN == 0x15 },
+		Execute: func(e *Emulator, o *Opcode) {
+			e.DelayTimer.SetValue(int(e.V[o.X]))
+		},
+	},
+	{
+		Name: "[FX18] SoundTimer = Vx",
+		Is:   func(o *Opcode) bool { return o.F == 0xF && o.NN == 0x18 },
+		Execute: func(e *Emulator, o *Opcode) {
+			// TODO: sound
+		},
+	},
+	{
+		Name: "[FX1E] Add To Index",
+		Is:   func(o *Opcode) bool { return o.F == 0xF && o.NN == 0x1E },
+		Execute: func(e *Emulator, o *Opcode) {
+			if e.Config.InstructionOverflowAddIndex && int(e.I)+int(e.V[o.X]) > 0x0FFF {
+				e.V[15] = 1
+			}
 
-func (e *Emulator) Op8XY3(X byte, Y byte) {
-	e.V[X] = e.V[X] ^ e.V[Y]
-}
+			e.I += uint16(e.V[o.X])
+		},
+	},
+	{
+		Name: "[FX29] Set Index To Font Character",
+		Is:   func(o *Opcode) bool { return o.F == 0xF && o.NN == 0x29 },
+		Execute: func(e *Emulator, o *Opcode) {
+			// TODO: font
+		},
+	},
+	{
+		Name: "[FX33] Binary-coded Decimal Conversion",
+		Is:   func(o *Opcode) bool { return o.F == 0xF && o.NN == 0x33 },
+		Execute: func(e *Emulator, o *Opcode) {
+			VX := e.V[o.X]
 
-func (e *Emulator) Op8XY4(X byte, Y byte) {
-	if int(e.V[X])+int(e.V[Y]) > 0xFFFF {
-		e.V[15] = 1
-	} else {
-		e.V[15] = 0
-	}
-
-	e.V[X] = e.V[X] + e.V[Y]
-}
-
-func (e *Emulator) Op8XY5(X byte, Y byte) {
-	if int(e.V[X])-int(e.V[Y]) > 0x0 {
-		e.V[15] = 1
-	} else {
-		e.V[15] = 0
-	}
-
-	e.V[X] = e.V[X] - e.V[Y]
-}
-
-func (e *Emulator) Op8XY6(X byte, Y byte) {
-	VX := e.V[X]
-
-	if e.Legacy {
-		VX = e.V[Y]
-	}
-
-	e.V[X] = VX >> 1
-	e.V[15] = GetBitAtPosition(VX, 0)
-}
-
-func (e *Emulator) Op8XY7(X byte, Y byte) {
-	if int(e.V[Y])-int(e.V[X]) > 0x0 {
-		e.V[15] = 1
-	} else {
-		e.V[15] = 0
-	}
-
-	e.V[X] = e.V[Y] - e.V[X]
-}
-
-func (e *Emulator) Op8XYE(X byte, Y byte) {
-	VX := e.V[X]
-
-	if e.Legacy {
-		VX = e.V[Y]
-	}
-
-	e.V[X] = VX << 1
-	e.V[15] = GetBitAtPosition(VX, 7)
-}
-
-func (e *Emulator) Op9XY0(X byte, Y byte) {
-	if e.V[X] != e.V[Y] {
-		e.PC += 2
-	}
-}
-
-func (e *Emulator) OpANNN(NNN uint16) {
-	e.I = NNN
-}
-
-func (e *Emulator) OpBNNN(X byte, NNN uint16) {
-	if e.Legacy {
-		e.PC = uint16(e.V[0]) + NNN
-	} else {
-		e.PC = uint16(e.V[X]) + NNN
-	}
-}
-
-func (e *Emulator) OpCXNN(X byte, NN byte) {
-	e.V[X] = byte(rand.Intn(256)) & NN
-}
-
-func (e *Emulator) OpDXYN(X byte, Y byte, N byte) {
-	x := int(e.V[X])
-	y := int(e.V[Y])
-	n := int(N)
-	data := make([]byte, 0, n)
-
-	for i := 0; i < n; i++ {
-		data = append(data, e.Memory.Read(e.I+uint16(i)))
-	}
-
-	unset := e.Display.Write(x, y, data)
-
-	if unset {
-		e.V[15] = 1
-	} else {
-		e.V[15] = 0
-	}
-}
-
-func (e *Emulator) OpEX9E(X byte) {
-	// key
-}
-
-func (e *Emulator) OpEXA1(X byte) {
-	// key
-}
-
-func (e *Emulator) OpFX07(X byte) {
-	e.V[X] = byte(e.DelayTimer.GetValue())
-}
-
-func (e *Emulator) OpFX0A(X byte) {
-	// key
-}
-
-func (e *Emulator) OpFX15(X byte) {
-	e.DelayTimer.SetValue(int(e.V[X]))
-}
-
-func (e *Emulator) OpFX18(X byte) {
-	// No sound implemented.
-}
-
-func (e *Emulator) OpFX1E(X byte) {
-	if int(e.I)+int(e.V[X]) > 0x0FFF {
-		e.V[15] = 1
-	}
-
-	e.I = e.I + uint16(e.V[X])
-}
-
-func (e *Emulator) OpFX29(X byte) {
-	// font
-}
-
-func (e *Emulator) OpFX33(X byte) {
-	VX := e.V[X]
-
-	e.Memory.Write(e.I, []byte{
-		byte(int(VX) / 100),
-		byte((int(VX) % 100) / 10),
-		byte(int(VX) % 10),
-	})
-}
-
-func (e *Emulator) OpFX55(X byte) {
-	if e.Legacy {
-		for i := 0; i <= int(X); i++ {
-			e.Memory.Write(e.I, []byte{e.V[i]})
-			e.I++
-		}
-	} else {
-		b := make([]byte, 0, X+1)
-
-		for i := 0; i <= int(X); i++ {
-			b = append(b, e.V[i])
-		}
-
-		e.Memory.Write(e.I, b)
-	}
-}
-
-func (e *Emulator) OpFX65(X byte) {
-	if e.Legacy {
-		for i := 0; i <= int(X); i++ {
-			e.V[i] = e.Memory.Read(e.I)
-			e.I++
-		}
-	} else {
-		for i := 0; i <= int(X); i++ {
-			e.V[i] = e.Memory.Read(e.I + uint16(i))
-		}
-	}
+			e.Memory.Write(e.I, []byte{
+				byte(int(VX) / 100),
+				byte((int(VX) % 100) / 10),
+				byte(int(VX) % 10),
+			})
+		},
+	},
+	{
+		Name: "[FX55] Store",
+		Is:   func(o *Opcode) bool { return o.F == 0xF && o.NN == 0x55 },
+		Execute: func(e *Emulator, o *Opcode) {
+			if e.Config.InstructionModifyIndexOnStoreAndLoad {
+				for i := 0; i <= int(o.X); i++ {
+					e.Memory.Write(e.I, []byte{e.V[i]})
+					e.I++
+				}
+			} else {
+				for i := 0; i <= int(o.X); i++ {
+					e.Memory.Write(e.I+uint16(i), []byte{e.V[i]})
+				}
+			}
+		},
+	},
+	{
+		Name: "[FX65] Load",
+		Is:   func(o *Opcode) bool { return o.F == 0xF && o.NN == 0x65 },
+		Execute: func(e *Emulator, o *Opcode) {
+			if e.Config.InstructionModifyIndexOnStoreAndLoad {
+				for i := 0; i <= int(o.X); i++ {
+					e.V[i] = e.Memory.Read(e.I)
+					e.I++
+				}
+			} else {
+				for i := 0; i <= int(o.X); i++ {
+					e.V[i] = e.Memory.Read(e.I + uint16(i))
+				}
+			}
+		},
+	},
 }
