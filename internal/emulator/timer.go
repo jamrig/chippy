@@ -25,7 +25,7 @@ func NewTimer(freq int) *Timer {
 }
 
 // Tick uses the delta from the main clock cycle to update the internal state.
-func (t *Timer) Tick(delta int64) {
+func (t *Timer) Tick(delta int64) bool {
 	t.Delta += delta
 
 	if t.Delta >= t.UpdateDelta {
@@ -33,11 +33,14 @@ func (t *Timer) Tick(delta int64) {
 
 		if t.Value == 0 {
 			t.Value = t.Frequency
-			return
+			return true
 		}
 
 		t.Value--
+		return true
 	}
+
+	return false
 }
 
 // GetValue gets the Value.
