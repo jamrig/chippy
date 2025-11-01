@@ -18,6 +18,7 @@ type Opcode struct {
 	NNN uint16
 }
 
+// NewOpcode returns a new Opcode.
 func NewOpcode(raw uint16) *Opcode {
 	return &Opcode{
 		Raw: raw,
@@ -28,4 +29,15 @@ func NewOpcode(raw uint16) *Opcode {
 		NN:  byte(raw & 0x00FF),
 		NNN: uint16(raw & 0x0FFF),
 	}
+}
+
+// Decode returns the instruction for the opcode.
+func (o *Opcode) Decode() *Instruction {
+	for _, instr := range Instructions {
+		if instr.Is(o) {
+			return &instr
+		}
+	}
+
+	return nil
 }
