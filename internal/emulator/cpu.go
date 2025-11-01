@@ -3,6 +3,7 @@ package emulator
 type CPU struct {
 	Config           *CPUConfig
 	Memory           *Memory
+	Display          *Display
 	Stack            *Stack
 	DelayTimer       *Timer
 	InstructionTimer *Timer
@@ -14,10 +15,11 @@ type CPU struct {
 	V [16]uint8
 }
 
-func NewCPU(config *CPUConfig, programAddress uint16, memory *Memory) *CPU {
+func NewCPU(config *CPUConfig, programAddress uint16, memory *Memory, display *Display) *CPU {
 	c := &CPU{
 		Config:           config,
 		Memory:           memory,
+		Display:          display,
 		Stack:            NewStack(config.StackInitialSize),
 		DelayTimer:       NewTimer(config.DelayTimerFrequency),
 		InstructionTimer: NewTimer(config.InstructionTimerFrequency),

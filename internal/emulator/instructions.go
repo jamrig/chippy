@@ -15,7 +15,7 @@ var Instructions = []Instruction{
 		Name: "[00E0] Clear Screen",
 		Is:   func(o *Opcode) bool { return o.Raw == 0x00E0 },
 		Execute: func(c *CPU, o *Opcode) {
-			// c.Display.Clear()
+			c.Display.Clear()
 		},
 	},
 	{
@@ -68,7 +68,7 @@ var Instructions = []Instruction{
 		},
 	},
 	{
-		Name: "[6XNN] VX == NN",
+		Name: "[6XNN] VX = NN",
 		Is:   func(o *Opcode) bool { return o.F == 6 },
 		Execute: func(c *CPU, o *Opcode) {
 			c.V[o.X] = o.NN
@@ -211,18 +211,11 @@ var Instructions = []Instruction{
 		},
 	},
 	{
-		Name: "[DNNN] Display",
-		Is:   func(o *Opcode) bool { return o.F == 0xC },
-		Execute: func(c *CPU, o *Opcode) {
-			c.V[o.X] = byte(rand.Intn(256)) & o.NN
-		},
-	},
-	{
-		Name: "[DNNN] Display",
+		Name: "[DXYN] Display",
 		Is:   func(o *Opcode) bool { return o.F == 0xD },
 		Execute: func(c *CPU, o *Opcode) {
-			// x := int(c.V[o.X])
-			// y := int(c.V[o.Y])
+			x := int(c.V[o.X])
+			y := int(c.V[o.Y])
 			n := int(o.N)
 			data := make([]byte, 0, n)
 
@@ -230,20 +223,13 @@ var Instructions = []Instruction{
 				data = append(data, c.Memory.Read(c.I+uint16(i)))
 			}
 
-			// unset := c.Display.Write(x, y, data)
+			unset := c.Display.Write(x, y, data)
 
-			// if unset {
-			// 	c.V[15] = 1
-			// } else {
-			// 	c.V[15] = 0
-			// }
-		},
-	},
-	{
-		Name: "[EX9E] Display",
-		Is:   func(o *Opcode) bool { return o.F == 0xE && o.NN == 0x9E },
-		Execute: func(c *CPU, o *Opcode) {
-			// TODO: key
+			if unset {
+				c.V[15] = 1
+			} else {
+				c.V[15] = 0
+			}
 		},
 	},
 	{

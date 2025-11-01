@@ -2,14 +2,9 @@ package emulator
 
 // Config contains the config for the emulator.
 type Config struct {
-	CPU    *CPUConfig
-	Memory *MemoryConfig
-	// // DisplayWidth is the width of the display.
-	// DisplayWidth = 64
-	// // DisplayHeight is the height of the display.
-	// DisplayHeight = 32
-	// // DisplayFrequency is the frequency of the display timer.
-	// DisplayFrequency = 60
+	CPU     *CPUConfig
+	Memory  *MemoryConfig
+	Display *DisplayConfig
 }
 
 // CPUConfig contains the config for the CPU.
@@ -40,6 +35,16 @@ type MemoryConfig struct {
 	FontAddress uint16
 }
 
+// DisplayConfig contains the config for the Display.
+type DisplayConfig struct {
+	// Width is the width of the display.
+	Width int
+	// Height is the height of the display.
+	Height int
+	// Frequency is the frequency of the display timer.
+	Frequency int
+}
+
 // CHIP8Config is the base config for a CHIP-8 system (Cosmac VIP).
 var CHIP8Config = &Config{
 	CPU: &CPUConfig{
@@ -55,5 +60,10 @@ var CHIP8Config = &Config{
 		Size:           4096,
 		ProgramAddress: 0x200,
 		FontAddress:    0x50,
+	},
+	Display: &DisplayConfig{
+		Width:     64,
+		Height:    32,
+		Frequency: 60,
 	},
 }

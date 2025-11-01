@@ -7,11 +7,11 @@ import (
 
 // Emulator contains all of the systems for the emulator.
 type Emulator struct {
-	Config *Config
-	Memory *Memory
-	CPU    *CPU
-	// Display    *Display
-	// Window     *Window
+	Config  *Config
+	Memory  *Memory
+	CPU     *CPU
+	Display *Display
+	Window  *Window
 }
 
 func New(fontFile, programFile string) (*Emulator, error) {
@@ -27,14 +27,16 @@ func New(fontFile, programFile string) (*Emulator, error) {
 
 	config := CHIP8Config
 
-	// w := NewWindow()
-	// d := NewDisplay(DisplayWidth, DisplayHeight, DisplayFrequency, w)
-	e := &Emulator{
-		Config: config,
-		Memory: NewMemory(config.Memory.Size),
+	w := NewWindow()
+	d := NewDisplay(config.Display, w)
+	m := NewMemory(config.Memory.Size)
 
-		// Display:    d,
-		// Window:     w,
+	e := &Emulator{
+		Config:  config,
+		Memory:  m,
+		CPU:     NewCPU(config.CPU, config.Memory.ProgramAddress, m, d),
+		Display: d,
+		Window:  w,
 	}
 
 	e.Memory.Write(config.Memory.FontAddress, font)
@@ -44,17 +46,17 @@ func New(fontFile, programFile string) (*Emulator, error) {
 }
 
 func (e *Emulator) Start() {
-	// e.Window.Init()
-	// defer e.Window.Destroy()
+	e.Window.Init()
+	defer e.Window.Destroy()
 
 	now := time.Now().UnixNano()
 	delta := int64(0)
 
-	for { // !e.Window.ShouldExit() {
+	for !e.Window.ShouldExit() {
 		delta = time.Now().UnixNano() - now
 
 		e.CPU.Tick(delta)
-		// e.Display.Tick(delta)
+		e.Display.Tick(delta)
 
 		now = time.Now().UnixNano()
 		// TODO: use the delta to reduce the sleep

@@ -12,13 +12,13 @@ type Display struct {
 }
 
 // NewDisplay returns a new Display.
-func NewDisplay(width int, height int, freq int, win *Window) *Display {
+func NewDisplay(config *DisplayConfig, win *Window) *Display {
 	return &Display{
-		Width:          width,
-		Height:         height,
-		Buffer:         make([]byte, width*height),
+		Width:          config.Width,
+		Height:         config.Height,
+		Buffer:         make([]byte, config.Width*config.Height),
 		LastTimerValue: 0,
-		Timer:          NewTimer(freq),
+		Timer:          NewTimer(config.Frequency),
 		Window:         win,
 		Changed:        false,
 	}
