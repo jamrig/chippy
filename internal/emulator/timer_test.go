@@ -4,7 +4,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/jamrig/chippy/emulator"
+	"github.com/jamrig/chippy/internal/emulator"
 	"github.com/stretchr/testify/assert"
 )
 

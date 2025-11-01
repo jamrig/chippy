@@ -4,8 +4,7 @@ import "time"
 
 // Timer represents a timer.
 type Timer struct {
-	// Value is the value of the timer.
-	// This starts with being equal to the frequency and decrements.
+	// Value is the current value of the timer.
 	Value int
 	// Delta is time in nanoseconds since the last update.
 	Delta int64
